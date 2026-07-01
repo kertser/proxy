@@ -1,0 +1,74 @@
+################################################################################
+# Shared Caddy reverse proxy configuration.
+#
+# Each site block:
+#   - Is served on the given domain via HTTPS with automatic Let's Encrypt
+#     certificate issuance and renewal.
+#   - Reverse-proxies to a named container reachable on the external "web"
+#     Docker network. The target container name must match the container_name
+#     declared in that app's docker-compose file.
+#
+# To add a new app:
+#   1. Give its public-facing container a stable container_name.
+#   2. Attach that container to the external "web" network.
+#   3. Append a new site block below.
+#   4. Reload without downtime:
+#        docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
+#
+################################################################################
+
+# ── SmartVoter ─────────────────────────────────────────────────────────────────
+smartvoter.alpha-numerical.com {
+	# Backend API endpoints (order matters: specific handlers first).
+	handle /api/*        { reverse_proxy smartvoter-backend:8000 }
+	handle /health       { reverse_proxy smartvoter-backend:8000 }
+	handle /docs         { reverse_proxy smartvoter-backend:8000 }
+	handle /openapi.json { reverse_proxy smartvoter-backend:8000 }
+
+	# Everything else → Next.js frontend.
+	reverse_proxy smartvoter-frontend:3000
+
+	encode gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
+
+# ── TDG ────────────────────────────────────────────────────────────────────────
+tdg.alpha-numerical.com {
+	# WebSocket must be matched explicitly so Caddy preserves the upgrade.
+	@ws path /ws/*
+	reverse_proxy @ws tdg-nginx:80
+
+	# Everything else: TDG's internal nginx already routes /api/* → backend:8000
+	# and everything else → static frontend.
+	reverse_proxy tdg-nginx:80
+
+	encode gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
+
+# ── Template for a new app (uncomment and adapt) ───────────────────────────────
+# myapp.alpha-numerical.com {
+# 	reverse_proxy myapp-frontend:3000
+# 	encode gzip
+# 	header {
+# 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+# 		X-Content-Type-Options "nosniff"
+# 		X-Frame-Options "SAMEORIGIN"
+# 		Referrer-Policy "strict-origin-when-cross-origin"
+# 		-Server
+# 	}
+# }

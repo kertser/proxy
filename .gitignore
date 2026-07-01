@@ -1,0 +1,7 @@
+# Local backups of the certificate volume (see README).
+backup/
+
+# Editor / OS junk
+.vscode/
+.idea/
+.DS_Store

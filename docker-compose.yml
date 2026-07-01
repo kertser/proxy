@@ -1,0 +1,50 @@
+# Shared Caddy reverse proxy for all apps on this host.
+#
+# This stack is independent from any application stack. It owns host ports
+# 80/443 (TCP + UDP for HTTP/3) and terminates TLS for every domain declared
+# in ./Caddyfile.
+#
+# Every application that wants to be fronted by this proxy must:
+#   1. Attach its public-facing container to the external "web" network.
+#   2. Have a stable container_name (this Caddyfile references containers by
+#      name via Docker's embedded DNS).
+#   3. Add its own site block to ./Caddyfile and run:
+#        docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
+#
+# One-time host setup:
+#   docker network create web
+#
+# Start / stop:
+#   docker compose up -d
+#   docker compose down
+#
+# Logs:
+#   docker compose logs -f caddy
+
+name: proxy
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: proxy-caddy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"   # HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - web
+
+networks:
+  web:
+    external: true
+
+volumes:
+  # caddy_data stores issued Let's Encrypt certificates. Do not delete this
+  # volume casually — you will hit ACME rate limits on re-issuance.
+  caddy_data:
+  caddy_config:
