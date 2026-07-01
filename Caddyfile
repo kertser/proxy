@@ -17,13 +17,21 @@
 #
 ################################################################################
 
-# ── SmartVoter ─────────────────────────────────────────────────────────────────
+# ── SmartVoter ────────────────────────────────────────────────────────────────
 smartvoter.alpha-numerical.com {
 	# Backend API endpoints (order matters: specific handlers first).
-	handle /api/*        { reverse_proxy smartvoter-backend:8000 }
-	handle /health       { reverse_proxy smartvoter-backend:8000 }
-	handle /docs         { reverse_proxy smartvoter-backend:8000 }
-	handle /openapi.json { reverse_proxy smartvoter-backend:8000 }
+	handle /api/* {
+		reverse_proxy smartvoter-backend:8000
+	}
+	handle /health {
+		reverse_proxy smartvoter-backend:8000
+	}
+	handle /docs {
+		reverse_proxy smartvoter-backend:8000
+	}
+	handle /openapi.json {
+		reverse_proxy smartvoter-backend:8000
+	}
 
 	# Everything else → Next.js frontend.
 	reverse_proxy smartvoter-frontend:3000
@@ -39,7 +47,7 @@ smartvoter.alpha-numerical.com {
 	}
 }
 
-# ── TDG ────────────────────────────────────────────────────────────────────────
+# ── TDG ───────────────────────────────────────────────────────────────────────
 tdg.alpha-numerical.com {
 	# WebSocket must be matched explicitly so Caddy preserves the upgrade.
 	@ws path /ws/*
@@ -60,7 +68,7 @@ tdg.alpha-numerical.com {
 	}
 }
 
-# ── Template for a new app (uncomment and adapt) ───────────────────────────────
+# ── Template for a new app (uncomment and adapt) ──────────────────────────────
 # myapp.alpha-numerical.com {
 # 	reverse_proxy myapp-frontend:3000
 # 	encode gzip
