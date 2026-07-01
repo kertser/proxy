@@ -68,6 +68,30 @@ tdg.alpha-numerical.com {
 	}
 }
 
+# ── SPF (Stock Portfolio Simulation) ──────────────────────────────────────────
+# Dash app served by kertser/Stock_Portfolio_Simulation. Container listens on
+# port 8050. Dash uses WebSockets for live callback updates, so an explicit
+# matcher is used to preserve the upgrade.
+spf.alpha-numerical.com {
+	@ws {
+		header Connection *Upgrade*
+		header Upgrade websocket
+	}
+	reverse_proxy @ws portfolio-mc:8050
+
+	reverse_proxy portfolio-mc:8050
+
+	encode gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
+
 # ── Template for a new app (uncomment and adapt) ──────────────────────────────
 # myapp.alpha-numerical.com {
 # 	reverse_proxy myapp-frontend:3000
